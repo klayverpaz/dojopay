@@ -7,9 +7,11 @@ import { MarkPaidDialog } from "@/components/MarkPaidDialog";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { formatBRL } from "@/lib/money";
 import { formatISODate, isoToBRDate } from "@/lib/date";
-import { getChargeWithClient } from "@/features/charges/queries";
+import { getChargeWithClient, listAttachmentsForCharge } from "@/features/charges/queries";
 import { cancelChargeAction } from "@/features/charges/actions";
 import { getSettings } from "@/features/settings/queries";
+import { AttachmentsGrid } from "@/components/AttachmentsGrid";
+import { ReceiptUploadButton } from "@/components/ReceiptUploadButton";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +31,9 @@ export default async function ChargeDetailPage({ params }: { params: { id: strin
 
   const settings = await getSettings();
   const template = settings?.message_template ?? "";
+
+  const attachments = await listAttachmentsForCharge(charge.id);
+  const ownerId = charge.owner_id;
 
   async function cancel() {
     "use server";
@@ -115,6 +120,20 @@ export default async function ChargeDetailPage({ params }: { params: { id: strin
           )}
         </div>
       )}
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase text-muted-foreground">
+            Comprovantes
+          </h2>
+          <ReceiptUploadButton chargeId={charge.id} ownerId={ownerId} />
+        </div>
+        {attachments.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhum anexo ainda.</p>
+        ) : (
+          <AttachmentsGrid attachments={attachments} />
+        )}
+      </div>
     </section>
   );
 }
