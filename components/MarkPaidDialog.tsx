@@ -29,10 +29,20 @@ type Props = {
   chargeId: string;
   defaultAmountCents: number;
   trigger: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
-export function MarkPaidDialog({ chargeId, defaultAmountCents, trigger }: Props) {
-  const [open, setOpen] = useState(false);
+export function MarkPaidDialog({
+  chargeId,
+  defaultAmountCents,
+  trigger,
+  open: controlledOpen,
+  onOpenChange,
+}: Props) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const [paidDate, setPaidDate] = useState(formatISODate(new Date()));
   const [amountDisplay, setAmountDisplay] = useState(formatBRL(defaultAmountCents));
   const [method, setMethod] = useState<PaymentMethod>("pix");
@@ -63,7 +73,7 @@ export function MarkPaidDialog({ chargeId, defaultAmountCents, trigger }: Props)
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      {trigger !== null && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Marcar como pago</DialogTitle>

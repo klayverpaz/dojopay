@@ -2,12 +2,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ChargeRow } from "@/components/ChargeRow";
 import { EmptyState } from "@/components/EmptyState";
-import { MarkPaidDialog } from "@/components/MarkPaidDialog";
+import { ChargeRowActions } from "@/components/ChargeRowActions";
 import { formatBRL } from "@/lib/money";
 import { formatISODate, isoToBRDate } from "@/lib/date";
 import { listTodayAndOverdueCharges } from "@/features/charges/queries";
 import { classifyToday } from "@/features/charges/services/classify";
 import { topUpAllClients } from "@/features/charges/actions";
+import { getSettings } from "@/features/settings/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,9 @@ export default async function HojePage() {
   const todayISO = formatISODate(new Date());
   const rows = await listTodayAndOverdueCharges(todayISO);
   const { today, overdue } = classifyToday(rows, todayISO);
+
+  const settings = await getSettings();
+  const template = settings?.message_template ?? "";
 
   const todayTotal = today.reduce((s, c) => s + c.amount_cents, 0);
   const overdueTotal = overdue.reduce((s, c) => s + c.amount_cents, 0);
@@ -51,14 +55,13 @@ export default async function HojePage() {
               charge={charge}
               tone="overdue"
               action={
-                <MarkPaidDialog
+                <ChargeRowActions
                   chargeId={charge.id}
-                  defaultAmountCents={charge.amount_cents}
-                  trigger={
-                    <Button size="sm" variant="outline">
-                      Pago
-                    </Button>
-                  }
+                  amountCents={charge.amount_cents}
+                  dueDateISO={charge.due_date}
+                  clientName={charge.client.name}
+                  clientPhone={charge.client.phone_e164}
+                  template={template}
                 />
               }
             />
@@ -87,14 +90,13 @@ export default async function HojePage() {
               charge={charge}
               tone="today"
               action={
-                <MarkPaidDialog
+                <ChargeRowActions
                   chargeId={charge.id}
-                  defaultAmountCents={charge.amount_cents}
-                  trigger={
-                    <Button size="sm" variant="outline">
-                      Pago
-                    </Button>
-                  }
+                  amountCents={charge.amount_cents}
+                  dueDateISO={charge.due_date}
+                  clientName={charge.client.name}
+                  clientPhone={charge.client.phone_e164}
+                  template={template}
                 />
               }
             />

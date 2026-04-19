@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChargeDetailForm } from "@/components/ChargeDetailForm";
 import { MarkPaidDialog } from "@/components/MarkPaidDialog";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { formatBRL } from "@/lib/money";
 import { formatISODate, isoToBRDate } from "@/lib/date";
 import { getChargeWithClient } from "@/features/charges/queries";
 import { cancelChargeAction } from "@/features/charges/actions";
+import { getSettings } from "@/features/settings/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +26,9 @@ export default async function ChargeDetailPage({ params }: { params: { id: strin
   const todayISO = formatISODate(new Date());
   const isOverdue = charge.status === "pending" && charge.due_date < todayISO;
   const clientId = charge.client.id;
+
+  const settings = await getSettings();
+  const template = settings?.message_template ?? "";
 
   async function cancel() {
     "use server";
@@ -73,17 +78,29 @@ export default async function ChargeDetailPage({ params }: { params: { id: strin
             initialNotes={charge.notes}
           />
 
-          <div className="grid grid-cols-2 gap-3 pt-2">
-            <MarkPaidDialog
-              chargeId={charge.id}
-              defaultAmountCents={charge.amount_cents}
-              trigger={<Button className="w-full">Marcar como pago</Button>}
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <MarkPaidDialog
+                chargeId={charge.id}
+                defaultAmountCents={charge.amount_cents}
+                trigger={<Button className="w-full">Marcar como pago</Button>}
+              />
+              <form action={cancel}>
+                <Button type="submit" variant="destructive" className="w-full">
+                  Cancelar
+                </Button>
+              </form>
+            </div>
+            <WhatsAppButton
+              template={template}
+              clientName={charge.client.name}
+              clientPhone={charge.client.phone_e164}
+              amountCents={charge.amount_cents}
+              dueDateISO={charge.due_date}
+              variant="outline"
+              size="default"
+              label="Notificar pelo Whatsapp"
             />
-            <form action={cancel}>
-              <Button type="submit" variant="destructive" className="w-full">
-                Cancelar
-              </Button>
-            </form>
           </div>
         </>
       ) : (
