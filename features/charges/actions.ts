@@ -6,6 +6,7 @@ import { newId } from "@/lib/uuid";
 import { formatISODate } from "@/lib/date";
 import { nextNDueDates } from "./services/cycle";
 import type { CycleKind } from "@/features/clients/types";
+import { markPaidInputSchema, updateChargeInputSchema } from "./schema";
 
 const ROLLING_WINDOW_TARGET = 3;
 
@@ -127,4 +128,98 @@ export async function topUpAllClients(): Promise<number> {
   }
   if (total > 0) revalidatePath("/hoje");
   return total;
+}
+
+export async function markPaidAction(input: unknown) {
+  const parsed = markPaidInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues.map((i) => i.message).join("; ") };
+  }
+
+  const supabase = createSupabase();
+
+  const { data: chargeRow, error: readErr } = await supabase
+    .from("charges")
+    .select("client_id, status")
+    .eq("id", parsed.data.charge_id)
+    .maybeSingle();
+  if (readErr) return { error: readErr.message };
+  if (!chargeRow) return { error: "Cobrança não encontrada." };
+  if (chargeRow.status !== "pending") return { error: "Cobrança já processada." };
+
+  const { error: updateErr } = await supabase
+    .from("charges")
+    .update({
+      status: "paid",
+      paid_at: `${parsed.data.paid_date}T12:00:00+00:00`,
+      paid_amount_cents: parsed.data.paid_amount_cents,
+      payment_method: parsed.data.payment_method,
+    })
+    .eq("id", parsed.data.charge_id);
+  if (updateErr) return { error: updateErr.message };
+
+  await topUpClientCharges(chargeRow.client_id);
+
+  revalidatePath("/hoje");
+  revalidatePath(`/cobrancas/${parsed.data.charge_id}`);
+  revalidatePath(`/clientes/${chargeRow.client_id}`);
+  return { success: true };
+}
+
+export async function cancelChargeAction(chargeId: string) {
+  const supabase = createSupabase();
+
+  const { data: chargeRow, error: readErr } = await supabase
+    .from("charges")
+    .select("client_id, status")
+    .eq("id", chargeId)
+    .maybeSingle();
+  if (readErr) return { error: readErr.message };
+  if (!chargeRow) return { error: "Cobrança não encontrada." };
+  if (chargeRow.status !== "pending") return { error: "Cobrança já processada." };
+
+  const { error: updateErr } = await supabase
+    .from("charges")
+    .update({ status: "canceled" })
+    .eq("id", chargeId);
+  if (updateErr) return { error: updateErr.message };
+
+  await topUpClientCharges(chargeRow.client_id);
+
+  revalidatePath("/hoje");
+  revalidatePath(`/cobrancas/${chargeId}`);
+  revalidatePath(`/clientes/${chargeRow.client_id}`);
+  return { success: true };
+}
+
+export async function updateChargeAction(input: unknown) {
+  const parsed = updateChargeInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues.map((i) => i.message).join("; ") };
+  }
+
+  const supabase = createSupabase();
+
+  const { data: chargeRow, error: readErr } = await supabase
+    .from("charges")
+    .select("client_id, status")
+    .eq("id", parsed.data.charge_id)
+    .maybeSingle();
+  if (readErr) return { error: readErr.message };
+  if (!chargeRow) return { error: "Cobrança não encontrada." };
+  if (chargeRow.status !== "pending") return { error: "Apenas cobranças pendentes podem ser editadas." };
+
+  const { error: updateErr } = await supabase
+    .from("charges")
+    .update({
+      amount_cents: parsed.data.amount_cents,
+      notes: parsed.data.notes,
+    })
+    .eq("id", parsed.data.charge_id);
+  if (updateErr) return { error: updateErr.message };
+
+  revalidatePath("/hoje");
+  revalidatePath(`/cobrancas/${parsed.data.charge_id}`);
+  revalidatePath(`/clientes/${chargeRow.client_id}`);
+  return { success: true };
 }
