@@ -1,9 +1,9 @@
 import type { Charge } from "@/features/charges/types";
 
-export function classifyToday(
-  charges: readonly Charge[],
+export function classifyToday<T extends Charge>(
+  charges: readonly T[],
   todayISO: string,
-): { today: Charge[]; overdue: Charge[] } {
+): { today: T[]; overdue: T[] } {
   const pending = charges.filter((c) => c.status === "pending");
 
   const todayBucket = pending
