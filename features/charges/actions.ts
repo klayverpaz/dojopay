@@ -7,6 +7,7 @@ import { formatISODate } from "@/lib/date";
 import { nextNDueDates } from "./services/cycle";
 import type { CycleKind } from "@/features/clients/types";
 import { markPaidInputSchema, updateChargeInputSchema } from "./schema";
+import { attachReceiptInputSchema } from "./schema-attachments";
 
 const ROLLING_WINDOW_TARGET = 3;
 
@@ -222,5 +223,64 @@ export async function updateChargeAction(input: unknown) {
   revalidatePath("/hoje");
   revalidatePath(`/cobrancas/${parsed.data.charge_id}`);
   revalidatePath(`/clientes/${chargeRow.client_id}`);
+  return { success: true };
+}
+
+export async function attachReceiptAction(input: unknown) {
+  const parsed = attachReceiptInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues.map((i) => i.message).join("; ") };
+  }
+
+  const supabase = createSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
+
+  const { data: chargeRow, error: readErr } = await supabase
+    .from("charges")
+    .select("id")
+    .eq("id", parsed.data.charge_id)
+    .maybeSingle();
+  if (readErr) return { error: readErr.message };
+  if (!chargeRow) return { error: "Cobrança não encontrada." };
+
+  const { error: insertErr } = await supabase.from("attachments").insert({
+    id: parsed.data.attachment_id,
+    owner_id: user.id,
+    charge_id: parsed.data.charge_id,
+    storage_path: parsed.data.storage_path,
+    mime_type: parsed.data.mime_type,
+    size_bytes: parsed.data.size_bytes,
+    original_name: parsed.data.original_name,
+  });
+  if (insertErr) return { error: insertErr.message };
+
+  revalidatePath(`/cobrancas/${parsed.data.charge_id}`);
+  return { success: true };
+}
+
+export async function deleteAttachmentAction(attachmentId: string) {
+  const supabase = createSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
+
+  const { data: row, error: readErr } = await supabase
+    .from("attachments")
+    .select("charge_id, storage_path")
+    .eq("id", attachmentId)
+    .maybeSingle();
+  if (readErr) return { error: readErr.message };
+  if (!row) return { error: "Anexo não encontrado." };
+
+  await supabase.storage.from("attachments").remove([row.storage_path]);
+
+  const { error: delErr } = await supabase.from("attachments").delete().eq("id", attachmentId);
+  if (delErr) return { error: delErr.message };
+
+  revalidatePath(`/cobrancas/${row.charge_id}`);
   return { success: true };
 }
