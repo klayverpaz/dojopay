@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient as createSupabase } from "@/lib/supabase/server";
 import { newId } from "@/lib/uuid";
+import { topUpClientCharges } from "@/features/charges/actions";
 import { clientInputSchema, type ClientInput } from "./schema";
 
 export async function createClientAction(input: ClientInput) {
@@ -26,7 +27,10 @@ export async function createClientAction(input: ClientInput) {
   });
   if (error) return { error: error.message };
 
+  await topUpClientCharges(id);
+
   revalidatePath("/clientes");
+  revalidatePath("/hoje");
   redirect(`/clientes/${id}`);
 }
 
@@ -40,8 +44,11 @@ export async function updateClientAction(id: string, input: ClientInput) {
   const { error } = await supabase.from("clients").update(parsed.data).eq("id", id);
   if (error) return { error: error.message };
 
+  await topUpClientCharges(id);
+
   revalidatePath("/clientes");
   revalidatePath(`/clientes/${id}`);
+  revalidatePath("/hoje");
   return { success: true };
 }
 
@@ -53,5 +60,6 @@ export async function archiveClientAction(id: string) {
     .eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/clientes");
+  revalidatePath("/hoje");
   redirect("/clientes");
 }
