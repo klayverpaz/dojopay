@@ -34,3 +34,15 @@ export interface CycleRule {
   anchorDate: string;
   endDate: string | null;
 }
+
+export interface Attachment {
+  id: string;
+  owner_id: string;
+  charge_id: string;
+  storage_path: string;
+  mime_type: string;
+  size_bytes: number | null;
+  original_name: string | null;
+  created_at: string;
+  deleted_at: string | null;
+}

@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { Charge, ChargeWithClient } from "./types";
+import type { Attachment, Charge, ChargeWithClient } from "./types";
 
 /**
  * All non-deleted charges for a single client, any status.
@@ -44,4 +44,25 @@ export async function getChargeWithClient(id: string): Promise<ChargeWithClient 
     .maybeSingle();
   if (error) throw new Error(error.message);
   return (data as unknown as ChargeWithClient | null) ?? null;
+}
+
+export async function listAttachmentsForCharge(chargeId: string): Promise<Attachment[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("attachments")
+    .select("*")
+    .eq("charge_id", chargeId)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as Attachment[];
+}
+
+export async function signedUrlForAttachment(storagePath: string): Promise<string | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase.storage
+    .from("attachments")
+    .createSignedUrl(storagePath, 300);
+  if (error) return null;
+  return data?.signedUrl ?? null;
 }
