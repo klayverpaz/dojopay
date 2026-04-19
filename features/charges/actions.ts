@@ -139,6 +139,10 @@ export async function markPaidAction(input: unknown) {
   }
 
   const supabase = createSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
 
   const { data: chargeRow, error: readErr } = await supabase
     .from("charges")
@@ -170,6 +174,10 @@ export async function markPaidAction(input: unknown) {
 
 export async function cancelChargeAction(chargeId: string) {
   const supabase = createSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
 
   const { data: chargeRow, error: readErr } = await supabase
     .from("charges")
@@ -201,6 +209,10 @@ export async function updateChargeAction(input: unknown) {
   }
 
   const supabase = createSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
 
   const { data: chargeRow, error: readErr } = await supabase
     .from("charges")

@@ -74,12 +74,25 @@ export async function eraseMyDataAction() {
   const { error: clientsErr } = await supabase.from("clients").delete().eq("owner_id", user.id);
   if (clientsErr) return { error: clientsErr.message };
 
-  const { data: files } = await supabase.storage.from("attachments").list(user.id, {
-    limit: 1000,
-  });
-  if (files && files.length > 0) {
-    const paths = files.map((f) => `${user.id}/${f.name}`);
-    await supabase.storage.from("attachments").remove(paths);
+  // Storage paths are `<user.id>/<charge_id>/<attachment_id>.<ext>` — two-level
+  // recursion needed. `.list()` does not recurse; we list charge folders, then
+  // list files in each, then bulk-remove.
+  const { data: chargeFolders } = await supabase.storage
+    .from("attachments")
+    .list(user.id, { limit: 1000 });
+  if (chargeFolders && chargeFolders.length > 0) {
+    const allFilePaths: string[] = [];
+    for (const folder of chargeFolders) {
+      const { data: files } = await supabase.storage
+        .from("attachments")
+        .list(`${user.id}/${folder.name}`, { limit: 1000 });
+      for (const f of files ?? []) {
+        allFilePaths.push(`${user.id}/${folder.name}/${f.name}`);
+      }
+    }
+    if (allFilePaths.length > 0) {
+      await supabase.storage.from("attachments").remove(allFilePaths);
+    }
   }
 
   await supabase
