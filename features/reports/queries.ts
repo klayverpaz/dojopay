@@ -44,10 +44,7 @@ export async function listPaidChargesInMonth(
  */
 export async function mapClientIdsToNames(): Promise<Map<string, string>> {
   const supabase = createClient();
-  const { data, error } = await supabase
-    .from("clients")
-    .select("id, name")
-    .is("deleted_at", null);
+  const { data, error } = await supabase.from("clients").select("id, name").is("deleted_at", null);
   if (error) throw new Error(error.message);
   const map = new Map<string, string>();
   for (const row of data ?? []) map.set(row.id, row.name);

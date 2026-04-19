@@ -63,9 +63,7 @@ export function ChargeRowActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onSelect={() => setMarkPaidOpen(true)}>
-            Marcar pago
-          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setMarkPaidOpen(true)}>Marcar pago</DropdownMenuItem>
           <DropdownMenuItem onSelect={onNotify}>Notificar pelo Whatsapp</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

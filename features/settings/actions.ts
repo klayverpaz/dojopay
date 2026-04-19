@@ -3,10 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient as createSupabase } from "@/lib/supabase/server";
-import {
-  updateReminderInputSchema,
-  updateTemplateInputSchema,
-} from "./schema";
+import { updateReminderInputSchema, updateTemplateInputSchema } from "./schema";
 
 export async function updateTemplateAction(input: unknown) {
   const parsed = updateTemplateInputSchema.safeParse(input);
@@ -71,16 +68,10 @@ export async function eraseMyDataAction() {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Sessão expirada." };
 
-  const { error: chargesErr } = await supabase
-    .from("charges")
-    .delete()
-    .eq("owner_id", user.id);
+  const { error: chargesErr } = await supabase.from("charges").delete().eq("owner_id", user.id);
   if (chargesErr) return { error: chargesErr.message };
 
-  const { error: clientsErr } = await supabase
-    .from("clients")
-    .delete()
-    .eq("owner_id", user.id);
+  const { error: clientsErr } = await supabase.from("clients").delete().eq("owner_id", user.id);
   if (clientsErr) return { error: clientsErr.message };
 
   const { data: files } = await supabase.storage.from("attachments").list(user.id, {

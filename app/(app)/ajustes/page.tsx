@@ -27,11 +27,7 @@ export default function AjustesPage() {
 
       <div className="space-y-2">
         {rows.map((r) => (
-          <Link
-            key={r.href}
-            href={r.href}
-            className="block rounded-md border p-4 hover:bg-muted"
-          >
+          <Link key={r.href} href={r.href} className="block rounded-md border p-4 hover:bg-muted">
             <div className="font-medium">{r.title}</div>
             <div className="text-xs text-muted-foreground">{r.description}</div>
           </Link>

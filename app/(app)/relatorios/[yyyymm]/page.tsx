@@ -2,14 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatBRL } from "@/lib/money";
 import { monthBoundsUTC } from "@/lib/date";
-import {
-  listPaidChargesInMonth,
-  mapClientIdsToNames,
-} from "@/features/reports/queries";
-import {
-  groupPaidByClient,
-  sumEarnings,
-} from "@/features/reports/services/aggregate";
+import { listPaidChargesInMonth, mapClientIdsToNames } from "@/features/reports/queries";
+import { groupPaidByClient, sumEarnings } from "@/features/reports/services/aggregate";
 
 export const dynamic = "force-dynamic";
 

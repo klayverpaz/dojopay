@@ -50,8 +50,7 @@ export default async function RelatoriosPage() {
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold">Relatórios</h1>
         <p className="text-sm text-muted-foreground">
-          Recebido em{" "}
-          {labelFor(`${currentYear}-${String(currentMonth).padStart(2, "0")}`)}
+          Recebido em {labelFor(`${currentYear}-${String(currentMonth).padStart(2, "0")}`)}
         </p>
       </header>
 

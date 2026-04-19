@@ -45,9 +45,7 @@ export function ReminderSettingsForm({
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <label className="flex items-center justify-between gap-3 rounded-md border p-3">
-        <span className="text-sm">
-          Receber lembrete diário por e-mail
-        </span>
+        <span className="text-sm">Receber lembrete diário por e-mail</span>
         <input
           type="checkbox"
           checked={enabled}
@@ -68,9 +66,7 @@ export function ReminderSettingsForm({
       </div>
 
       <label className="flex items-center justify-between gap-3 rounded-md border p-3">
-        <span className="text-sm">
-          Só enviar quando houver cobrança vencendo ou em atraso
-        </span>
+        <span className="text-sm">Só enviar quando houver cobrança vencendo ou em atraso</span>
         <input
           type="checkbox"
           checked={notifyOnlyIfAny}

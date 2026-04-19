@@ -44,9 +44,7 @@ export function TemplateEditor({ initial }: { initial: string }) {
       </div>
 
       <div className="rounded-md border bg-muted/40 p-3 text-sm">
-        <div className="mb-1 text-xs font-semibold uppercase text-muted-foreground">
-          Prévia
-        </div>
+        <div className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Prévia</div>
         <p className="whitespace-pre-wrap">{preview}</p>
       </div>
 

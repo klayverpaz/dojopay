@@ -123,9 +123,7 @@ export default async function ChargeDetailPage({ params }: { params: { id: strin
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase text-muted-foreground">
-            Comprovantes
-          </h2>
+          <h2 className="text-sm font-semibold uppercase text-muted-foreground">Comprovantes</h2>
           <ReceiptUploadButton chargeId={charge.id} ownerId={ownerId} />
         </div>
         {attachments.length === 0 ? (

@@ -10,7 +10,8 @@
 
 **Reference spec:** `docs/superpowers/specs/2026-04-19-dojopay-design.md` — §4 feature set (WhatsApp, attachments, reports, settings), §6.4 `settings` table, §7.1 all four pages, §7.2 charge detail (attachments grid), §7.3 Notificar pelo Whatsapp + Anexar comprovante, §8.3 domain services (`template.ts`, `aggregate.ts`), §8.7 i18n scaffolding, §8.8 attachments flow.
 
-**Build on Plans 1 + 2:** 
+**Build on Plans 1 + 2:**
+
 - Plan 1: `docs/superpowers/plans/2026-04-19-plan-1-foundation.md` — schema, RLS, storage bucket, auth.
 - Plan 2: `docs/superpowers/plans/2026-04-19-plan-2-charges-hoje.md` — charges engine, Hoje, charge detail.
 - Do NOT reintroduce packages already installed; do NOT run `shadcn@latest` (would break Tailwind v3 / Radix stack).
@@ -30,7 +31,7 @@
 
 ## Not in Plan 3 (covered by Plan 4 or later)
 
-- Daily reminder email sending (the `settings.daily_reminder_time` row is edited here; the Supabase Edge Function that *sends* the email is Plan 4).
+- Daily reminder email sending (the `settings.daily_reminder_time` row is edited here; the Supabase Edge Function that _sends_ the email is Plan 4).
 - PWA (manifest + service worker) — Plan 4.
 - `next-intl` keyed strings — Plan 4 (v1 ships hardcoded PT-BR copy; scaffolding already in place).
 - Feature-gate UI (paywall / Plano row wiring) — the Ajustes hub has a static "Plano: Gratuito" placeholder row but does not invoke `useIsPro()` yet.
@@ -147,10 +148,7 @@ Create `features/settings/actions.ts`:
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient as createSupabase } from "@/lib/supabase/server";
-import {
-  updateReminderInputSchema,
-  updateTemplateInputSchema,
-} from "./schema";
+import { updateReminderInputSchema, updateTemplateInputSchema } from "./schema";
 
 export async function updateTemplateAction(input: unknown) {
   const parsed = updateTemplateInputSchema.safeParse(input);
@@ -215,16 +213,10 @@ export async function eraseMyDataAction() {
   } = await supabase.auth.getUser();
   if (!user) return { error: "Sessão expirada." };
 
-  const { error: chargesErr } = await supabase
-    .from("charges")
-    .delete()
-    .eq("owner_id", user.id);
+  const { error: chargesErr } = await supabase.from("charges").delete().eq("owner_id", user.id);
   if (chargesErr) return { error: chargesErr.message };
 
-  const { error: clientsErr } = await supabase
-    .from("clients")
-    .delete()
-    .eq("owner_id", user.id);
+  const { error: clientsErr } = await supabase.from("clients").delete().eq("owner_id", user.id);
   if (clientsErr) return { error: clientsErr.message };
 
   const { data: files } = await supabase.storage.from("attachments").list(user.id, {
@@ -281,10 +273,11 @@ import { fillTemplate } from "@/features/charges/services/template";
 
 describe("fillTemplate", () => {
   it("replaces all three placeholders", () => {
-    const out = fillTemplate(
-      "Olá {nome}, vence {vencimento}, valor {valor}.",
-      { nome: "João", valor: "R$ 150,00", vencimento: "19/04/2026" },
-    );
+    const out = fillTemplate("Olá {nome}, vence {vencimento}, valor {valor}.", {
+      nome: "João",
+      valor: "R$ 150,00",
+      vencimento: "19/04/2026",
+    });
     expect(out).toBe("Olá João, vence 19/04/2026, valor R$ 150,00.");
   });
 
@@ -546,9 +539,7 @@ export function ChargeRowActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onSelect={() => setMarkPaidOpen(true)}>
-            Marcar pago
-          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setMarkPaidOpen(true)}>Marcar pago</DropdownMenuItem>
           <DropdownMenuItem onSelect={onNotify}>Notificar pelo Whatsapp</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -609,7 +600,9 @@ Then, in the returned JSX, replace this line:
 with:
 
 ```tsx
-{trigger !== null && <DialogTrigger asChild>{trigger}</DialogTrigger>}
+{
+  trigger !== null && <DialogTrigger asChild>{trigger}</DialogTrigger>;
+}
 ```
 
 - [ ] **Step 3: Wire the dropdown into `/hoje`**
@@ -1175,9 +1168,7 @@ In the JSX, add a new section just above the closing `</section>` tag:
 ```tsx
 <div className="space-y-3">
   <div className="flex items-center justify-between">
-    <h2 className="text-sm font-semibold uppercase text-muted-foreground">
-      Comprovantes
-    </h2>
+    <h2 className="text-sm font-semibold uppercase text-muted-foreground">Comprovantes</h2>
     <ReceiptUploadButton chargeId={charge.id} ownerId={ownerId} />
   </div>
   {attachments.length === 0 ? (
@@ -1471,10 +1462,7 @@ export async function listPaidChargesInMonth(
  */
 export async function mapClientIdsToNames(): Promise<Map<string, string>> {
   const supabase = createClient();
-  const { data, error } = await supabase
-    .from("clients")
-    .select("id, name")
-    .is("deleted_at", null);
+  const { data, error } = await supabase.from("clients").select("id, name").is("deleted_at", null);
   if (error) throw new Error(error.message);
   const map = new Map<string, string>();
   for (const row of data ?? []) map.set(row.id, row.name);
@@ -1543,7 +1531,10 @@ export default async function RelatoriosPage() {
   const months = groupPaidByMonth(allPaid);
 
   const currentMonthPaid = allPaid.filter(
-    (c) => c.paid_at && c.paid_at >= `${bounds.start}T00:00:00+00:00` && c.paid_at < `${bounds.endExclusive}T00:00:00+00:00`,
+    (c) =>
+      c.paid_at &&
+      c.paid_at >= `${bounds.start}T00:00:00+00:00` &&
+      c.paid_at < `${bounds.endExclusive}T00:00:00+00:00`,
   );
   const currentMonthTotal = sumEarnings(currentMonthPaid);
 
@@ -1560,7 +1551,8 @@ export default async function RelatoriosPage() {
         <div className="text-sm text-muted-foreground">Total do mês</div>
         <div className="text-2xl font-semibold">{formatBRL(currentMonthTotal)}</div>
         <div className="text-xs text-muted-foreground">
-          {currentMonthPaid.length} {currentMonthPaid.length === 1 ? "cobrança paga" : "cobranças pagas"}
+          {currentMonthPaid.length}{" "}
+          {currentMonthPaid.length === 1 ? "cobrança paga" : "cobranças pagas"}
         </div>
       </div>
 
@@ -1627,14 +1619,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { formatBRL } from "@/lib/money";
 import { monthBoundsUTC } from "@/lib/date";
-import {
-  listPaidChargesInMonth,
-  mapClientIdsToNames,
-} from "@/features/reports/queries";
-import {
-  groupPaidByClient,
-  sumEarnings,
-} from "@/features/reports/services/aggregate";
+import { listPaidChargesInMonth, mapClientIdsToNames } from "@/features/reports/queries";
+import { groupPaidByClient, sumEarnings } from "@/features/reports/services/aggregate";
 
 export const dynamic = "force-dynamic";
 
@@ -1782,11 +1768,7 @@ export default function AjustesPage() {
 
       <div className="space-y-2">
         {rows.map((r) => (
-          <Link
-            key={r.href}
-            href={r.href}
-            className="block rounded-md border p-4 hover:bg-muted"
-          >
+          <Link key={r.href} href={r.href} className="block rounded-md border p-4 hover:bg-muted">
             <div className="font-medium">{r.title}</div>
             <div className="text-xs text-muted-foreground">{r.description}</div>
           </Link>
@@ -1869,9 +1851,7 @@ export function TemplateEditor({ initial }: { initial: string }) {
       </div>
 
       <div className="rounded-md border bg-muted/40 p-3 text-sm">
-        <div className="mb-1 text-xs font-semibold uppercase text-muted-foreground">
-          Prévia
-        </div>
+        <div className="mb-1 text-xs font-semibold uppercase text-muted-foreground">Prévia</div>
         <p className="whitespace-pre-wrap">{preview}</p>
       </div>
 
@@ -1983,9 +1963,7 @@ export function ReminderSettingsForm({
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <label className="flex items-center justify-between gap-3 rounded-md border p-3">
-        <span className="text-sm">
-          Receber lembrete diário por e-mail
-        </span>
+        <span className="text-sm">Receber lembrete diário por e-mail</span>
         <input
           type="checkbox"
           checked={enabled}
@@ -2006,9 +1984,7 @@ export function ReminderSettingsForm({
       </div>
 
       <label className="flex items-center justify-between gap-3 rounded-md border p-3">
-        <span className="text-sm">
-          Só enviar quando houver cobrança vencendo ou em atraso
-        </span>
+        <span className="text-sm">Só enviar quando houver cobrança vencendo ou em atraso</span>
         <input
           type="checkbox"
           checked={notifyOnlyIfAny}
@@ -2300,7 +2276,9 @@ export function SideNav() {
             key={item.href}
             href={item.href}
             className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm ${
-              active ? "bg-muted font-medium text-foreground" : "text-muted-foreground hover:bg-muted"
+              active
+                ? "bg-muted font-medium text-foreground"
+                : "text-muted-foreground hover:bg-muted"
             }`}
           >
             <item.Icon className="h-4 w-4" />
@@ -2605,10 +2583,7 @@ Insert a "Cobranças" section above the archive button:
 <div className="space-y-2">
   <div className="flex items-center justify-between">
     <h2 className="text-sm font-semibold uppercase text-muted-foreground">Cobranças</h2>
-    <OneOffChargeDialog
-      clientId={client.id}
-      defaultAmountCents={client.default_amount_cents}
-    />
+    <OneOffChargeDialog clientId={client.id} defaultAmountCents={client.default_amount_cents} />
   </div>
   {charges.length === 0 ? (
     <p className="text-sm text-muted-foreground">Nenhuma cobrança ainda.</p>

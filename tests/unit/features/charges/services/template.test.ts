@@ -3,10 +3,11 @@ import { fillTemplate } from "@/features/charges/services/template";
 
 describe("fillTemplate", () => {
   it("replaces all three placeholders", () => {
-    const out = fillTemplate(
-      "Olá {nome}, vence {vencimento}, valor {valor}.",
-      { nome: "João", valor: "R$ 150,00", vencimento: "19/04/2026" },
-    );
+    const out = fillTemplate("Olá {nome}, vence {vencimento}, valor {valor}.", {
+      nome: "João",
+      valor: "R$ 150,00",
+      vencimento: "19/04/2026",
+    });
     expect(out).toBe("Olá João, vence 19/04/2026, valor R$ 150,00.");
   });
 

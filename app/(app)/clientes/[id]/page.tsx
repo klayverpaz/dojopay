@@ -73,7 +73,11 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                 <div>
                   <div className="font-medium">{isoToBRDate(c.due_date)}</div>
                   <div className="text-xs text-muted-foreground">
-                    {c.status === "paid" ? "Paga" : c.status === "canceled" ? "Cancelada" : "Pendente"}
+                    {c.status === "paid"
+                      ? "Paga"
+                      : c.status === "canceled"
+                        ? "Cancelada"
+                        : "Pendente"}
                   </div>
                 </div>
                 <div className="font-semibold">{formatBRL(c.amount_cents)}</div>
