@@ -51,12 +51,7 @@ export function ChargeDetailForm({ chargeId, initialAmountCents, initialNotes }:
       </div>
       <div className="space-y-2">
         <Label htmlFor="notes">Observações</Label>
-        <Textarea
-          id="notes"
-          rows={3}
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-        />
+        <Textarea id="notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </div>
       <Button type="submit" disabled={pending} className="w-full">
         {pending ? "Salvando..." : "Salvar alterações"}

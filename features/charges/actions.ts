@@ -207,7 +207,8 @@ export async function updateChargeAction(input: unknown) {
     .maybeSingle();
   if (readErr) return { error: readErr.message };
   if (!chargeRow) return { error: "Cobrança não encontrada." };
-  if (chargeRow.status !== "pending") return { error: "Apenas cobranças pendentes podem ser editadas." };
+  if (chargeRow.status !== "pending")
+    return { error: "Apenas cobranças pendentes podem ser editadas." };
 
   const { error: updateErr } = await supabase
     .from("charges")

@@ -17,12 +17,7 @@ function lastDayOfMonthUTC(year: number, month1Indexed: number): number {
   return new Date(Date.UTC(year, month1Indexed, 0)).getUTCDate();
 }
 
-export function addCycle(
-  anchorISO: string,
-  kind: CycleKind,
-  every: number,
-  times: number,
-): string {
+export function addCycle(anchorISO: string, kind: CycleKind, every: number, times: number): string {
   const { y, m, d } = parseYMD(anchorISO);
 
   if (kind === "days" || kind === "weeks") {
@@ -32,7 +27,7 @@ export function addCycle(
   }
 
   // months
-  const totalMonths = (m - 1) + every * times;
+  const totalMonths = m - 1 + every * times;
   const targetYear = y + Math.floor(totalMonths / 12);
   const targetMonth0 = ((totalMonths % 12) + 12) % 12;
   const targetMonth1 = targetMonth0 + 1;

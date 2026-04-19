@@ -14,7 +14,9 @@ export function classifyToday<T extends Charge>(
   const overdueBucket = pending
     .filter((c) => c.due_date < todayISO)
     .slice()
-    .sort((a, b) => (a.due_date === b.due_date ? a.id.localeCompare(b.id) : a.due_date.localeCompare(b.due_date)));
+    .sort((a, b) =>
+      a.due_date === b.due_date ? a.id.localeCompare(b.id) : a.due_date.localeCompare(b.due_date),
+    );
 
   return { today: todayBucket, overdue: overdueBucket };
 }

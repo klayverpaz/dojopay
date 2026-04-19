@@ -23,7 +23,10 @@ test("sign-up then create client golden path", async ({ page }) => {
   await expect(page.getByText("Nenhum cliente ainda")).toBeVisible();
 
   // Create a client
-  await page.getByRole("link", { name: /Adicionar/ }).first().click();
+  await page
+    .getByRole("link", { name: /Adicionar/ })
+    .first()
+    .click();
   await page.getByLabel("Nome").fill("João da Silva");
   await page.getByLabel("Telefone (WhatsApp)").fill("+5511987654321");
   await page.getByLabel("Valor padrão").fill("R$ 150,00");

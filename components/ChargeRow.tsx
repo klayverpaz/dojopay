@@ -16,9 +16,7 @@ export function ChargeRow({ charge, tone, action }: Props) {
     <div className={`flex items-center justify-between rounded-md border ${borderTone} p-3`}>
       <Link href={`/cobrancas/${charge.id}`} className="flex-1 pr-3">
         <div className="font-medium">{charge.client.name}</div>
-        <div className="text-xs text-muted-foreground">
-          Vence em {isoToBRDate(charge.due_date)}
-        </div>
+        <div className="text-xs text-muted-foreground">Vence em {isoToBRDate(charge.due_date)}</div>
       </Link>
       <div className="flex items-center gap-3">
         <div className="text-right">

@@ -310,12 +310,7 @@ function lastDayOfMonthUTC(year: number, month1Indexed: number): number {
   return new Date(Date.UTC(year, month1Indexed, 0)).getUTCDate();
 }
 
-export function addCycle(
-  anchorISO: string,
-  kind: CycleKind,
-  every: number,
-  times: number,
-): string {
+export function addCycle(anchorISO: string, kind: CycleKind, every: number, times: number): string {
   const { y, m, d } = parseYMD(anchorISO);
 
   if (kind === "days" || kind === "weeks") {
@@ -325,7 +320,7 @@ export function addCycle(
   }
 
   // months
-  const totalMonths = (m - 1) + every * times;
+  const totalMonths = m - 1 + every * times;
   const targetYear = y + Math.floor(totalMonths / 12);
   const targetMonth0 = ((totalMonths % 12) + 12) % 12;
   const targetMonth1 = targetMonth0 + 1;
@@ -487,7 +482,9 @@ export function classifyToday<T extends Charge>(
   const overdueBucket = pending
     .filter((c) => c.due_date < todayISO)
     .slice()
-    .sort((a, b) => (a.due_date === b.due_date ? a.id.localeCompare(b.id) : a.due_date.localeCompare(b.due_date)));
+    .sort((a, b) =>
+      a.due_date === b.due_date ? a.id.localeCompare(b.id) : a.due_date.localeCompare(b.due_date),
+    );
 
   return { today: todayBucket, overdue: overdueBucket };
 }
@@ -980,7 +977,8 @@ export async function updateChargeAction(input: unknown) {
     .maybeSingle();
   if (readErr) return { error: readErr.message };
   if (!chargeRow) return { error: "Cobrança não encontrada." };
-  if (chargeRow.status !== "pending") return { error: "Apenas cobranças pendentes podem ser editadas." };
+  if (chargeRow.status !== "pending")
+    return { error: "Apenas cobranças pendentes podem ser editadas." };
 
   const { error: updateErr } = await supabase
     .from("charges")
@@ -1055,9 +1053,7 @@ export function ChargeRow({ charge, tone, action }: Props) {
     <div className={`flex items-center justify-between rounded-md border ${borderTone} p-3`}>
       <Link href={`/cobrancas/${charge.id}`} className="flex-1 pr-3">
         <div className="font-medium">{charge.client.name}</div>
-        <div className="text-xs text-muted-foreground">
-          Vence em {isoToBRDate(charge.due_date)}
-        </div>
+        <div className="text-xs text-muted-foreground">Vence em {isoToBRDate(charge.due_date)}</div>
       </Link>
       <div className="flex items-center gap-3">
         <div className="text-right">
@@ -1510,12 +1506,7 @@ export function ChargeDetailForm({ chargeId, initialAmountCents, initialNotes }:
       </div>
       <div className="space-y-2">
         <Label htmlFor="notes">Observações</Label>
-        <Textarea
-          id="notes"
-          rows={3}
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-        />
+        <Textarea id="notes" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
       </div>
       <Button type="submit" disabled={pending} className="w-full">
         {pending ? "Salvando..." : "Salvar alterações"}
