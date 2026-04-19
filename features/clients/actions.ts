@@ -41,6 +41,11 @@ export async function updateClientAction(id: string, input: ClientInput) {
   }
 
   const supabase = createSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
+
   const { error } = await supabase.from("clients").update(parsed.data).eq("id", id);
   if (error) return { error: error.message };
 
@@ -54,6 +59,11 @@ export async function updateClientAction(id: string, input: ClientInput) {
 
 export async function archiveClientAction(id: string) {
   const supabase = createSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
+
   const { error } = await supabase
     .from("clients")
     .update({ archived_at: new Date().toISOString() })

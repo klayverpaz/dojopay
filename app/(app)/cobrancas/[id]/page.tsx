@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChargeDetailForm } from "@/components/ChargeDetailForm";
@@ -8,6 +8,8 @@ import { formatBRL } from "@/lib/money";
 import { formatISODate, isoToBRDate } from "@/lib/date";
 import { getChargeWithClient } from "@/features/charges/queries";
 import { cancelChargeAction } from "@/features/charges/actions";
+
+export const dynamic = "force-dynamic";
 
 const statusLabel = {
   pending: "Pendente",
@@ -21,10 +23,13 @@ export default async function ChargeDetailPage({ params }: { params: { id: strin
 
   const todayISO = formatISODate(new Date());
   const isOverdue = charge.status === "pending" && charge.due_date < todayISO;
+  const clientId = charge.client.id;
 
   async function cancel() {
     "use server";
-    await cancelChargeAction(params.id);
+    const result = await cancelChargeAction(params.id);
+    if (result?.error) return;
+    redirect(`/clientes/${clientId}`);
   }
 
   return (
