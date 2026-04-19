@@ -5,12 +5,16 @@ import { getClient } from "@/features/clients/queries";
 import { formatBRL } from "@/lib/money";
 import { isoToBRDate } from "@/lib/date";
 import { archiveClientAction } from "@/features/clients/actions";
+import { listChargesForClient } from "@/features/charges/queries";
+import { OneOffChargeDialog } from "@/components/OneOffChargeDialog";
 
 const cycleLabel = { days: "dias", weeks: "semanas", months: "meses" } as const;
 
 export default async function ClientDetailPage({ params }: { params: { id: string } }) {
   const client = await getClient(params.id);
   if (!client) notFound();
+
+  const charges = await listChargesForClient(client.id);
 
   async function archive() {
     "use server";
@@ -47,6 +51,37 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
           <p>{client.notes}</p>
         </div>
       )}
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase text-muted-foreground">Cobranças</h2>
+          <OneOffChargeDialog
+            clientId={client.id}
+            defaultAmountCents={client.default_amount_cents}
+          />
+        </div>
+        {charges.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhuma cobrança ainda.</p>
+        ) : (
+          <div className="space-y-2">
+            {charges.map((c) => (
+              <Link
+                key={c.id}
+                href={`/cobrancas/${c.id}`}
+                className="flex items-center justify-between rounded-md border p-3 hover:bg-muted"
+              >
+                <div>
+                  <div className="font-medium">{isoToBRDate(c.due_date)}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {c.status === "paid" ? "Paga" : c.status === "canceled" ? "Cancelada" : "Pendente"}
+                  </div>
+                </div>
+                <div className="font-semibold">{formatBRL(c.amount_cents)}</div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
 
       <form action={archive}>
         <Button type="submit" variant="destructive" className="w-full">

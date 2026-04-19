@@ -8,6 +8,7 @@ import { nextNDueDates } from "./services/cycle";
 import type { CycleKind } from "@/features/clients/types";
 import { markPaidInputSchema, updateChargeInputSchema } from "./schema";
 import { attachReceiptInputSchema } from "./schema-attachments";
+import { oneOffChargeInputSchema } from "./schema-oneoff";
 
 const ROLLING_WINDOW_TARGET = 3;
 
@@ -283,4 +284,33 @@ export async function deleteAttachmentAction(attachmentId: string) {
 
   revalidatePath(`/cobrancas/${row.charge_id}`);
   return { success: true };
+}
+
+export async function createOneOffChargeAction(input: unknown) {
+  const parsed = oneOffChargeInputSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues.map((i) => i.message).join("; ") };
+  }
+
+  const supabase = createSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sessão expirada." };
+
+  const id = newId();
+  const { error } = await supabase.from("charges").insert({
+    id,
+    owner_id: user.id,
+    client_id: parsed.data.client_id,
+    due_date: parsed.data.due_date,
+    amount_cents: parsed.data.amount_cents,
+    status: "pending",
+    notes: parsed.data.notes,
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath("/hoje");
+  revalidatePath(`/clientes/${parsed.data.client_id}`);
+  return { success: true, chargeId: id };
 }
