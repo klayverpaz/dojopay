@@ -1,6 +1,13 @@
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "DojoPay",
@@ -18,13 +25,13 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f172a",
+  themeColor: "#f8fafc",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR">
-      <body className="min-h-screen bg-background text-foreground antialiased">
+    <html lang="pt-BR" className={inter.variable}>
+      <body className="min-h-screen bg-background font-sans text-foreground antialiased">
         {children}
         <Toaster />
       </body>
