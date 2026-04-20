@@ -1,4 +1,5 @@
 [build]
+  command = "next build"
   publish = ".next"
 
 [build.environment]
