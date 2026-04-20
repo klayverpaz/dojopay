@@ -1,111 +1,93 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { ChargeRow } from "@/components/ChargeRow";
-import { EmptyState } from "@/components/EmptyState";
-import { ChargeRowActions } from "@/components/ChargeRowActions";
+import { HeroSummary } from "@/components/ui/hero-summary";
+import { HojeFilterPills } from "@/components/HojeFilterPills";
 import { PWAInstallHint } from "@/components/PWAInstallHint";
 import { formatBRL } from "@/lib/money";
-import { formatISODate, isoToBRDate } from "@/lib/date";
-import { listTodayAndOverdueCharges } from "@/features/charges/queries";
+import { formatISODate } from "@/lib/date";
+import {
+  listTodayAndOverdueCharges,
+  listMonthSummaryCharges,
+} from "@/features/charges/queries";
 import { classifyToday } from "@/features/charges/services/classify";
+import { buildMonthSummary } from "@/features/charges/services/summary";
 import { topUpAllClients } from "@/features/charges/actions";
 import { getSettings } from "@/features/settings/queries";
 
 export const dynamic = "force-dynamic";
 
+const MONTH_LABELS = [
+  "janeiro",
+  "fevereiro",
+  "março",
+  "abril",
+  "maio",
+  "junho",
+  "julho",
+  "agosto",
+  "setembro",
+  "outubro",
+  "novembro",
+  "dezembro",
+];
+
 export default async function HojePage() {
   await topUpAllClients();
 
-  const todayISO = formatISODate(new Date());
-  const rows = await listTodayAndOverdueCharges(todayISO);
-  const { today, overdue } = classifyToday(rows, todayISO);
+  const now = new Date();
+  const todayISO = formatISODate(now);
+  const yyyyMm = todayISO.slice(0, 7);
+  const monthName = MONTH_LABELS[now.getUTCMonth()];
 
-  const settings = await getSettings();
+  const [todayAndOverdue, monthCharges, settings] = await Promise.all([
+    listTodayAndOverdueCharges(todayISO),
+    listMonthSummaryCharges(yyyyMm),
+    getSettings(),
+  ]);
+  const { today, overdue } = classifyToday(todayAndOverdue, todayISO);
+  const summary = buildMonthSummary(monthCharges, todayISO, yyyyMm);
   const template = settings?.message_template ?? "";
 
-  const todayTotal = today.reduce((s, c) => s + c.amount_cents, 0);
-  const overdueTotal = overdue.reduce((s, c) => s + c.amount_cents, 0);
+  const todayFormatted = new Intl.DateTimeFormat("pt-BR", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+  }).format(now);
 
   return (
-    <section className="mx-auto max-w-2xl space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold">Hoje</h1>
-        <p className="text-sm text-muted-foreground">{isoToBRDate(todayISO)}</p>
+    <section className="mx-auto max-w-2xl space-y-5 lg:max-w-5xl">
+      <header>
+        <h1 className="text-[28px] font-bold leading-tight tracking-tight">Hoje</h1>
+        <p className="text-xs capitalize text-muted-foreground">{todayFormatted}</p>
       </header>
 
       <PWAInstallHint />
 
-      <div className="rounded-md border p-4">
-        <div className="text-sm text-muted-foreground">A receber hoje</div>
-        <div className="text-2xl font-semibold">{formatBRL(todayTotal)}</div>
-        <div className="text-xs text-muted-foreground">
-          {today.length} {today.length === 1 ? "cobrança" : "cobranças"}
-        </div>
-        {overdue.length > 0 && (
-          <div className="mt-3 border-t pt-3 text-sm text-destructive">
-            Em atraso: {formatBRL(overdueTotal)} ({overdue.length}{" "}
-            {overdue.length === 1 ? "cobrança" : "cobranças"})
-          </div>
-        )}
-      </div>
+      <HeroSummary
+        label="A receber no mês"
+        value={formatBRL(summary.receivable.cents)}
+        sub={`${summary.receivable.count} ${summary.receivable.count === 1 ? "cobrança" : "cobranças"} · ${monthName}`}
+        secondary={[
+          {
+            label: "Em atraso",
+            value: formatBRL(summary.overdue.cents),
+            sub: `${summary.overdue.count} ${summary.overdue.count === 1 ? "cobrança" : "cobranças"}`,
+            tone: "danger",
+          },
+          {
+            label: "Recebido",
+            value: formatBRL(summary.received.cents),
+            sub: `${summary.received.count} ${summary.received.count === 1 ? "cobrança" : "cobranças"}`,
+            tone: "success",
+          },
+        ]}
+      />
 
-      {overdue.length > 0 && (
-        <div className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase text-muted-foreground">Em atraso</h2>
-          {overdue.map((charge) => (
-            <ChargeRow
-              key={charge.id}
-              charge={charge}
-              tone="overdue"
-              action={
-                <ChargeRowActions
-                  chargeId={charge.id}
-                  amountCents={charge.amount_cents}
-                  dueDateISO={charge.due_date}
-                  clientName={charge.client.name}
-                  clientPhone={charge.client.phone_e164}
-                  template={template}
-                />
-              }
-            />
-          ))}
-        </div>
-      )}
-
-      <div className="space-y-2">
-        <h2 className="text-sm font-semibold uppercase text-muted-foreground">Hoje</h2>
-        {today.length === 0 && overdue.length === 0 ? (
-          <EmptyState
-            title="Nada para hoje"
-            description="Quando uma cobrança vencer, ela aparece aqui."
-            action={
-              <Button asChild variant="outline">
-                <Link href="/clientes">Ver clientes</Link>
-              </Button>
-            }
-          />
-        ) : today.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhuma cobrança vence hoje.</p>
-        ) : (
-          today.map((charge) => (
-            <ChargeRow
-              key={charge.id}
-              charge={charge}
-              tone="today"
-              action={
-                <ChargeRowActions
-                  chargeId={charge.id}
-                  amountCents={charge.amount_cents}
-                  dueDateISO={charge.due_date}
-                  clientName={charge.client.name}
-                  clientPhone={charge.client.phone_e164}
-                  template={template}
-                />
-              }
-            />
-          ))
-        )}
-      </div>
+      <HojeFilterPills
+        today={today}
+        overdue={overdue}
+        paid={[]}
+        template={template}
+        todayISO={todayISO}
+      />
     </section>
   );
 }
