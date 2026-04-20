@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { monthBoundsUTC } from "@/lib/date";
 import type { Attachment, Charge, ChargeWithClient } from "./types";
 
 /**
@@ -76,10 +77,12 @@ export async function signedUrlForAttachment(storagePath: string): Promise<strin
  */
 export async function listMonthSummaryCharges(yyyyMm: string): Promise<Charge[]> {
   const supabase = createClient();
-  const monthStart = `${yyyyMm}-01`;
-  const monthEnd = `${yyyyMm}-31`;
+  const [yearStr, monthStr] = yyyyMm.split("-");
+  const year = Number.parseInt(yearStr ?? "", 10);
+  const month = Number.parseInt(monthStr ?? "", 10);
+  const { start: monthStart, endExclusive: nextMonthStart } = monthBoundsUTC(year, month);
   const paidFromTs = `${monthStart}T00:00:00+00:00`;
-  const paidToTs = `${yyyyMm}-31T23:59:59+00:00`;
+  const paidToExclusiveTs = `${nextMonthStart}T00:00:00+00:00`;
 
   const { data, error } = await supabase
     .from("charges")
@@ -87,8 +90,8 @@ export async function listMonthSummaryCharges(yyyyMm: string): Promise<Charge[]>
     .is("deleted_at", null)
     .or(
       [
-        `and(status.eq.pending,due_date.lte.${monthEnd})`,
-        `and(status.eq.paid,paid_at.gte.${paidFromTs},paid_at.lte.${paidToTs})`,
+        `and(status.eq.pending,due_date.lt.${nextMonthStart})`,
+        `and(status.eq.paid,paid_at.gte.${paidFromTs},paid_at.lt.${paidToExclusiveTs})`,
       ].join(","),
     );
   if (error) throw new Error(error.message);
