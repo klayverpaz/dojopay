@@ -4,17 +4,14 @@ test("charges rolling window and mark-paid golden path", async ({ page }) => {
   const email = `c${Date.now()}@example.test`;
   const password = "testpass1234";
 
-  // Sign up
+  // Sign up — local Supabase auto-confirms and returns a session immediately.
   await page.goto("/sign-up");
   await page.getByLabel("E-mail").fill(email);
   await page.getByLabel("Senha").fill(password);
   await page.getByRole("button", { name: /Criar/ }).click();
+  await page.waitForURL(/\/sign-up\/check-email$/, { timeout: 10000 });
 
-  // Local Supabase auto-confirms; go sign in
-  await page.goto("/sign-in");
-  await page.getByLabel("E-mail").fill(email);
-  await page.getByLabel("Senha").fill(password);
-  await page.getByRole("button", { name: /Entrar/ }).click();
+  await page.goto("/hoje");
   await expect(page).toHaveURL(/\/hoje$/);
 
   // Empty Hoje state

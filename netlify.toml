@@ -1,0 +1,9 @@
+# Netlify auto-detects Next.js and provisions the OpenNext adapter at build time.
+# This file just pins Node 20 and documents the build command explicitly.
+
+[build]
+  command = "next build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"

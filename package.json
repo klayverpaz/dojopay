@@ -15,9 +15,11 @@
     "test:e2e:ui": "playwright test --ui",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "db:types": "supabase gen types typescript --local 2>/dev/null > lib/supabase/types.ts"
+    "db:types": "supabase gen types typescript --local 2>/dev/null > lib/supabase/types.ts",
+    "icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
+    "@ducanh2912/next-pwa": "^10.2.9",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -57,6 +59,7 @@
     "postcss": "^8",
     "prettier": "^3.8.3",
     "prettier-plugin-tailwindcss": "^0.7.2",
+    "sharp": "^0.34.5",
     "supabase": "^2.92.1",
     "tailwindcss": "^3.4.1",
     "typescript": "^5",

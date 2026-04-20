@@ -4,17 +4,17 @@ test("sign-up then create client golden path", async ({ page }) => {
   const email = `u${Date.now()}@example.test`;
   const password = "testpass1234";
 
-  // Sign up
+  // Sign up — local Supabase auto-confirms and returns a session, so the user
+  // is authenticated immediately after the server action runs.
   await page.goto("/sign-up");
   await page.getByLabel("E-mail").fill(email);
   await page.getByLabel("Senha").fill(password);
   await page.getByRole("button", { name: /Criar/ }).click();
+  await page.waitForURL(/\/sign-up\/check-email$/, { timeout: 10000 });
 
-  // With confirmations off, go sign in immediately.
-  await page.goto("/sign-in");
-  await page.getByLabel("E-mail").fill(email);
-  await page.getByLabel("Senha").fill(password);
-  await page.getByRole("button", { name: /Entrar/ }).click();
+  // Session cookie is now set; navigating to any app route lands on /hoje
+  // (middleware redirects /sign-in → /hoje for authenticated users).
+  await page.goto("/hoje");
   await expect(page).toHaveURL(/\/hoje$/);
 
   // Navigate to clientes — empty state visible

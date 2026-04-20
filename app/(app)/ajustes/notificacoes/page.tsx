@@ -17,7 +17,8 @@ export default async function NotificacoesPage() {
         </Link>
         <h1 className="text-2xl font-semibold">Lembrete diário por e-mail</h1>
         <p className="text-sm text-muted-foreground">
-          O envio automático é ativado no próximo release (Plano 4).
+          O envio automático de lembretes virá em uma versão futura. Suas preferências ficam salvas
+          para quando o recurso for ativado.
         </p>
       </div>
 

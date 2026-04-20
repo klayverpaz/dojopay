@@ -98,10 +98,13 @@ export async function topUpClientCharges(clientId: string): Promise<number> {
     status: "pending" as const,
   }));
 
-  const { error: insertErr } = await supabase.from("charges").insert(rows);
+  const { error: insertErr, data: insertedRows } = await supabase
+    .from("charges")
+    .upsert(rows, { onConflict: "client_id,due_date", ignoreDuplicates: true })
+    .select("id");
   if (insertErr) throw new Error(insertErr.message);
 
-  return rows.length;
+  return (insertedRows ?? []).length;
 }
 
 /**

@@ -4,15 +4,14 @@ test("edit template, create charge, mark paid, see monthly total", async ({ page
   const email = `p3${Date.now()}@example.test`;
   const password = "testpass1234";
 
-  // Sign up + sign in
+  // Sign up — local Supabase auto-confirms and returns a session immediately.
   await page.goto("/sign-up");
   await page.getByLabel("E-mail").fill(email);
   await page.getByLabel("Senha").fill(password);
   await page.getByRole("button", { name: /Criar/ }).click();
-  await page.goto("/sign-in");
-  await page.getByLabel("E-mail").fill(email);
-  await page.getByLabel("Senha").fill(password);
-  await page.getByRole("button", { name: /Entrar/ }).click();
+  await page.waitForURL(/\/sign-up\/check-email$/, { timeout: 10000 });
+
+  await page.goto("/hoje");
   await expect(page).toHaveURL(/\/hoje$/);
 
   // Edit template via Ajustes

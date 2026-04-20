@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ChargeRow } from "@/components/ChargeRow";
 import { EmptyState } from "@/components/EmptyState";
 import { ChargeRowActions } from "@/components/ChargeRowActions";
+import { PWAInstallHint } from "@/components/PWAInstallHint";
 import { formatBRL } from "@/lib/money";
 import { formatISODate, isoToBRDate } from "@/lib/date";
 import { listTodayAndOverdueCharges } from "@/features/charges/queries";
@@ -31,6 +32,8 @@ export default async function HojePage() {
         <h1 className="text-2xl font-semibold">Hoje</h1>
         <p className="text-sm text-muted-foreground">{isoToBRDate(todayISO)}</p>
       </header>
+
+      <PWAInstallHint />
 
       <div className="rounded-md border p-4">
         <div className="text-sm text-muted-foreground">A receber hoje</div>

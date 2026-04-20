@@ -32,6 +32,7 @@ export function ReceiptUploadButton({ chargeId, ownerId }: Props) {
     if (!file) return;
 
     setUploading(true);
+    const supabase = createClient();
     try {
       const processed = await compressImageIfNeeded(file);
       const attachmentId = newId();
@@ -39,7 +40,6 @@ export function ReceiptUploadButton({ chargeId, ownerId }: Props) {
       const ext = extensionFromMime(processed.type, originalExt);
       const storagePath = `${ownerId}/${chargeId}/${attachmentId}.${ext}`;
 
-      const supabase = createClient();
       const { error: upErr } = await supabase.storage
         .from("attachments")
         .upload(storagePath, processed, {
@@ -60,8 +60,16 @@ export function ReceiptUploadButton({ chargeId, ownerId }: Props) {
           size_bytes: processed.size,
           original_name: file.name,
         });
-        if (result?.error) toast.error(result.error);
-        else toast.success("Anexo enviado.");
+        if (result?.error) {
+          toast.error(result.error);
+          try {
+            await supabase.storage.from("attachments").remove([storagePath]);
+          } catch {
+            // best-effort rollback; if this also fails there's nothing the UI can do
+          }
+        } else {
+          toast.success("Anexo enviado.");
+        }
       });
     } finally {
       setUploading(false);
